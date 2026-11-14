@@ -1,6 +1,6 @@
 import { configureStore } from "@reduxjs/toolkit";
 import HomePageReducer from "./screens/homePage/slice";
-import reduxLogger from "redux-logger";
+import { logger as reduxLogger } from "redux-logger";
 
 
 export const store = configureStore({
