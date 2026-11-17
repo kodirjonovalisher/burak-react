@@ -18,6 +18,8 @@
     "@mui/lab": "^5.0.0-alpha.86",
     "@mui/material": "5.18.0",
     "@reduxjs/toolkit": "^2.13.0",
+    "axios": "^0.27.2",
+    "cors": "^2.8.6",
     "moment": "^2.29.4",
     "react": "^19.3.1",
     "react-dom": "^19.3.1",
@@ -29,6 +31,8 @@
   },
   "devDependencies": {
     "@eslint/js": "^10.0.1",
+    "@types/axios": "^0.14.4",
+    "@types/cors": "^2.8.19",
     "@types/node": "^24.19.2",
     "@types/react": "^19.3.0",
     "@types/react-dom": "^19.3.0",
