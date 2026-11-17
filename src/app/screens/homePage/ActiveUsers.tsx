@@ -4,14 +4,24 @@ import { CssVarsProvider, Typography } from "@mui/joy";
 import CardOverflow from "@mui/joy/CardOverflow";
 import AspectRatio from "@mui/joy/AspectRatio";
 
-const activeUsers = [
-    { memberNick: "Martin", memberImage: "/img/martin.webp" },
-    { memberNick: "Justin", memberImage: "/img/justin.webp" },
-    { memberNick: "Rose", memberImage: "/img/rose.webp" },
-    { memberNick: "Nusret", memberImage: "/img/nusret.webp" },
-];
+
+import { useSelector } from "react-redux";
+import { createSelector } from "reselect";
+import { retrieveTopUsers } from "./selector";
+import { serverApi } from "../../../lib/config";
+import { Member } from "../../../lib/types/member";
+
+/** REDUX SLICE & SELECTOR */
+const topUsersRetriever = createSelector(
+    retrieveTopUsers,
+    (topUsers) => ({ topUsers })
+);
+
 
 export default function ActiveUsers() {
+    const { topUsers } = useSelector(topUsersRetriever);
+
+
     return (
         <div className="active-users-frame">
             <Container>
@@ -20,24 +30,29 @@ export default function ActiveUsers() {
 
                     <Stack className="cards-frame">
                         <CssVarsProvider>
-                            {activeUsers.length !== 0 ? (
-                                activeUsers.map((user) => (
-                                    <Card className="card" key={user.memberNick}>
-                                        <CardOverflow>
-                                            <AspectRatio ratio="1">
-                                                <img
-                                                    src={user.memberImage}
-                                                    alt={user.memberNick}
-                                                    loading="lazy"
-                                                />
-                                            </AspectRatio>
-                                        </CardOverflow>
+                            {topUsers.length !== 0 ? (
+                                topUsers.map((member: Member) => {
+                                    const imagePath = member.memberImage
+                                        ? `${serverApi}/${member.memberImage}`
+                                        : "/icons/default-user.svg";
+                                    return (
+                                        <Card className="card" key={member._id}>
+                                            <CardOverflow>
+                                                <AspectRatio ratio="1">
+                                                    <img
+                                                        src={imagePath}
+                                                        alt={member.memberNick}
+                                                        loading="lazy"
+                                                    />
+                                                </AspectRatio>
+                                            </CardOverflow>
 
-                                        <Typography className="member-nickname">
-                                            {user.memberNick}
-                                        </Typography>
-                                    </Card>
-                                ))
+                                            <Typography className="member-nickname">
+                                                {member.memberNick}
+                                            </Typography>
+                                        </Card>
+                                    );
+                                })
                             ) : (
                                 <Box className="no-data">No Active Users!</Box>
                             )}
