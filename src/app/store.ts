@@ -1,6 +1,7 @@
 import { configureStore } from "@reduxjs/toolkit";
 import HomePageReducer from "./screens/homePage/slice";
 import { logger as reduxLogger } from "redux-logger";
+import ProductsPageReducer from "./screens/productsPage/slice";
 
 
 export const store = configureStore({
@@ -11,6 +12,7 @@ export const store = configureStore({
     reducer: {
         homePage: HomePageReducer,
         example: (state = {}) => state,
+        productsPage: ProductsPageReducer,
     },
 });
 
