@@ -3,12 +3,25 @@ import Swal from "sweetalert2";
 import { Messages } from "./config";
 
 export const sweetErrorHandling = async (err: any) => {
-  const error = err.response?.data ?? err;
-  const message = error?.message ?? Messages.error1;
+  const responseData = err?.response?.data;
+  const responseMessage =
+    typeof responseData === "string"
+      ? responseData
+      : responseData?.message ?? responseData?.error;
+  const message = Array.isArray(responseMessage)
+    ? responseMessage.join(", ")
+    : responseMessage ??
+      ([401, 403].includes(err?.response?.status) ? Messages.error6 : err?.message) ??
+      Messages.error1;
+
   await Swal.fire({
     icon: "error",
     text: message,
     showConfirmButton: false,
+    didOpen: () => {
+      const container = Swal.getContainer();
+      if (container) container.style.zIndex = "2000";
+    },
   });
 };
 

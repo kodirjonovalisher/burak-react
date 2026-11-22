@@ -4,7 +4,7 @@ import LoginIconModule from "@mui/icons-material/Login";
 import { T } from "../../../lib/common";
 import { Messages } from "../../../lib/config";
 import MemberService from "../../services/MemberService";
-import { MemberInput } from "../../../lib/types/member";
+import { LoginInput, MemberInput } from "../../../lib/types/member";
 import { sweetErrorHandling } from "../../../lib/sweetAlert";
 
 const LoginIcon = (LoginIconModule as unknown as { default: typeof LoginIconModule }).default;
@@ -41,13 +41,14 @@ export default function AuthenticationModal(props: AuthenticationModalProps) {
   const handlePasswordKeyDown = (e: T) => {
     if (e.key === "Enter" && signupOpen) {
       handleSignupRequest().then();
+    } else if (e.key === "Enter" && loginOpen) {
+      handleLoginRequest().then();
     }
   };
 
   const handleSignupRequest = async () => {
     try {
-      console.log("inputs:", memberNick, memberPhone, memberPassword);
-      const isFulfill = memberNick !== "" && memberPhone !== "" && memberPassword !== "";
+      const isFulfill = Boolean(memberNick.trim() && memberPhone.trim() && memberPassword.trim());
       if (!isFulfill) throw new Error(Messages.error3);
 
       const signupInput: MemberInput = {
@@ -59,14 +60,36 @@ export default function AuthenticationModal(props: AuthenticationModalProps) {
       const memberService = new MemberService();
       const member = await memberService.signup(signupInput);
 
+      // Saving Authenticated user
       handleSignupClose();
-
     } catch (err) {
       console.log("Error:", err);
-      handleSignupClose();
       sweetErrorHandling(err).then();
     }
   };
+
+  const handleLoginRequest = async () => {
+    try {
+      const isFulfill = Boolean(memberNick.trim() && memberPassword.trim());
+      if (!isFulfill) throw new Error(Messages.error3);
+
+      const loginInput: LoginInput = {
+        memberNick: memberNick,
+        memberPassword: memberPassword
+      };
+
+      const memberService = new MemberService();
+      await memberService.login(loginInput);
+
+      // Saving Authenticated user
+      handleLoginClose();
+
+    } catch (err) {
+      console.log("Error:", err);
+      sweetErrorHandling(err).then();
+    }
+  };
+
   return (
     <div>
       <Modal
@@ -106,6 +129,7 @@ export default function AuthenticationModal(props: AuthenticationModalProps) {
                 variant="outlined"
                 type="password"
                 onChange={handlePassword}
+                onKeyDown={handlePasswordKeyDown}
               />
               <Fab
                 sx={{ marginTop: "30px", width: "120px" }}
@@ -149,18 +173,21 @@ export default function AuthenticationModal(props: AuthenticationModalProps) {
                 label="username"
                 variant="outlined"
                 sx={{ my: "10px" }}
+                onChange={handleUsername}
               />
               <TextField
                 id={"outlined-basic"}
                 label={"password"}
                 variant={"outlined"}
                 type={"password"}
+                onChange={handlePassword}
                 onKeyDown={handlePasswordKeyDown}
               />
               <Fab
                 sx={{ marginTop: "27px", width: "120px" }}
                 variant={"extended"}
                 color={"primary"}
+                onClick={handleLoginRequest}
               >
                 <LoginIcon sx={{ mr: 1 }} />
                 Login
@@ -171,8 +198,5 @@ export default function AuthenticationModal(props: AuthenticationModalProps) {
       </Modal>
     </div>
   );
-}
-function useStyles() {
-  throw new Error("Function not implemented.");
 }
 
