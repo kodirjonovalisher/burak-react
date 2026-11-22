@@ -11,8 +11,8 @@ export const sweetErrorHandling = async (err: any) => {
   const message = Array.isArray(responseMessage)
     ? responseMessage.join(", ")
     : responseMessage ??
-      ([401, 403].includes(err?.response?.status) ? Messages.error6 : err?.message) ??
-      Messages.error1;
+    ([401, 403].includes(err?.response?.status) ? Messages.error6 : err?.message) ??
+    Messages.error1;
 
   await Swal.fire({
     icon: "error",
