@@ -1,30 +1,21 @@
 import { Box, Button, Container, Stack } from "@mui/material";
 import { NavLink } from "react-router-dom";
 import Basket from "./Basket";
-import React, { useEffect, useState } from "react";
+import React, { useState } from "react";
 import { CartItem } from "../../../lib/types/search";
 
 interface HomeNavbarProps {
     cartItems: CartItem[];
-    onRemove: (id: string) => void;
-    onChangeQuantity: (id: string, change: number) => void;
+    onAdd: (item: CartItem) => void;
+    onRemove: (item: CartItem) => void;
+    onDelete: (item: CartItem) => void;
+    onDeleteAll: () => void;
 }
 export default function HomeNavbar(props: HomeNavbarProps) {
-    const { cartItems, onRemove, onChangeQuantity } = props;
+    const { cartItems, onAdd, onRemove, onDelete, onDeleteAll } = props;
     const authMember = null;
-    const [count, setCount] = useState(0);
-    const [value, setvalue] = useState<boolean>(true);
-
-    useEffect(() => {
-        console.log("componentDidMount"); //DATA FETCH
-        setCount(count + 1);
-
-        return () => {
-            console.log("componentWillUnmount");
-        };
-    }, [value]);
-    /**HANDLERS */
-    const buttonHandler = () => { setvalue(!value); };
+    const [count, setCount] = useState(1);
+    const buttonHandler = () => setCount((current) => current + 1);
 
     return (
         <div className="home-navbar">
@@ -68,7 +59,7 @@ export default function HomeNavbar(props: HomeNavbarProps) {
                                 Help
                             </NavLink>
                         </Box>
-                        <Basket cartItems={cartItems} onRemove={onRemove} onChangeQuantity={onChangeQuantity} />
+                        <Basket cartItems={cartItems} onAdd={onAdd} onRemove={onRemove} onDelete={onDelete} onDeleteAll={onDeleteAll} />
 
                         {!authMember ? (
                             <Box>

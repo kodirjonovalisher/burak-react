@@ -1,30 +1,31 @@
-//@ts-nocheck
-import React, { Component } from "react";
+import { Component } from "react";
 
-class Test extends Component {
-    constructor(props) {
-        super(props);
-        this.state = {
-            brand: "Ford",
-            model: "Mustang",
-            color: "red",
-            year: 1964
-        };
-    }
+interface TestState {
+    brand: string;
+    model: string;
+    color: string;
+    year: number;
+}
+
+class Test extends Component<Record<string, never>, TestState> {
+    state: TestState = {
+        brand: "Ford",
+        model: "Mustang",
+        color: "red",
+        year: 1964,
+    };
+
     changeDetail = () => {
-        this.setState({ color: "red", brand: "BYD", model: "T", year: 2026, });
+        this.setState({ color: "red", brand: "BYD", model: "T", year: 2026 });
     };
 
     componentDidMount() {
         console.log("componentDidMount");
-        //runs after first render => RETRIEVE DATA FROM BACKEND SERVER
     }
 
     componentWillUnmount() {
         console.log("componentWillUnmount");
-        //runs before component unmount
     }
-    componentDidUpdate() { }
 
     render() {
         return (
@@ -33,10 +34,7 @@ class Test extends Component {
                 <p>
                     Color:{this.state.color}-Model:{this.state.model} from {this.state.year}.
                 </p>
-                <button
-                    type="button"
-                    onClick={this.changeDetail}
-                >Change Detail</button>
+                <button type="button" onClick={this.changeDetail}>Change Detail</button>
             </div>
         );
     }

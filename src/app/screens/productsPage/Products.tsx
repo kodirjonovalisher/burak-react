@@ -1,8 +1,8 @@
-import React, { ChangeEvent, useEffect, useState } from "react";
+import React, { useEffect, useState } from "react";
 import { Box, Button, Container, Stack } from "@mui/material";
 
 import { useDispatch, useSelector } from "react-redux";
-import { Dispatch } from "@reduxjs/toolkit";
+import { AppDispatch } from "../../store";
 import { setProducts } from "./slice";
 import { Product, ProductInquiry } from "../../../lib/types/product";
 import { retrieveProducts } from "./selector";
@@ -14,9 +14,6 @@ import { useHistory } from "react-router-dom";
 import { CartItem } from "../../../lib/types/search";
 
 //**REDUX SLICE & SELECTOR */
-const actionDispatch = (dispatch: Dispatch) => ({
-    setProducts: (data: Product[]) => dispatch(setProducts(data)),
-});
 const productsRetriever = createSelector(retrieveProducts, (products) => ({ products, }));
 interface ProductsProps {
     onAdd: (item: CartItem) => void;
@@ -26,7 +23,7 @@ interface ProductsProps {
 
 export default function Products(props: ProductsProps) {
     const { onAdd } = props;
-    const { setProducts } = actionDispatch(useDispatch());
+    const dispatch = useDispatch<AppDispatch>();
     const { products } = useSelector(productsRetriever);
     const [productSearch, setProductSearch] = useState<ProductInquiry>({
         page: 1,
@@ -42,38 +39,21 @@ export default function Products(props: ProductsProps) {
         const product = new ProductService();
         product
             .getProducts(productSearch)
-            .then((data) => setProducts(data))
+            .then((data) => dispatch(setProducts(data)))
             .catch((err) => console.log(err));
-    }, [productSearch]);
-
-    useEffect(() => {
-        if (searchText === "") {
-            productSearch.search = "";
-            setProductSearch({ ...productSearch });
-        }
-    }, [searchText]);
+    }, [dispatch, productSearch]);
 
     /**HANDLERS */
     const searchCollectionHandler = (collection: ProductCollection) => {
-        productSearch.page = 1;
-        productSearch.productCollection = collection;
-        setProductSearch({ ...productSearch });
+        setProductSearch((current) => ({ ...current, page: 1, productCollection: collection }));
     };
 
     const searchOrderHandler = (Order: string) => {
-        productSearch.page = 1;
-        productSearch.order = Order;
-        setProductSearch({ ...productSearch });
+        setProductSearch((current) => ({ ...current, page: 1, order: Order }));
     };
 
     const searchProductHandler = () => {
-        productSearch.search = searchText;
-        setProductSearch({ ...productSearch });
-    };
-
-    const paginationHandler = (e: ChangeEvent<any>, value: number) => {
-        productSearch.page = value;
-        setProductSearch({ ...productSearch });
+        setProductSearch((current) => ({ ...current, search: searchText, page: 1 }));
     };
 
 
@@ -95,7 +75,15 @@ export default function Products(props: ProductsProps) {
                                     name={"singleResearch"}
                                     placeholder={"Type here"}
                                     value={searchText}
-                                    onChange={(e) => setSearchText(e.target.value)}
+                                    onChange={(e) => {
+                                        const value = e.target.value;
+                                        setSearchText(value);
+                                        if (value === "") {
+                                            setProductSearch((current) => current.search
+                                                ? { ...current, search: "", page: 1 }
+                                                : current);
+                                        }
+                                    }}
                                     onKeyDown={(e) => {
                                         if (e.key === "Enter") searchProductHandler();
                                     }}

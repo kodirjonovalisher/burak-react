@@ -49,14 +49,12 @@ export default function FinishedOrders() {
                     );
                 })}
 
-                {true && (
-                    <Box display={"flex"} flexDirection={"row"} justifyContent={"center"}>
+                <Box display={"flex"} flexDirection={"row"} justifyContent={"center"}>
                         <img
                             src={"/icons/noimage-list.svg"}
                             style={{ width: 300, height: 300 }}
                         />
-                    </Box>
-                )}
+                </Box>
             </Stack>
         </TabPanel>
     );

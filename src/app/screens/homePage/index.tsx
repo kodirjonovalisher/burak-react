@@ -1,4 +1,3 @@
-import { Container } from "@mui/material";
 import React, { useEffect } from "react";
 import Statistics from "./Statistics";
 import PopularDishes from "./PopularDishes";
@@ -9,24 +8,14 @@ import Events from "./Events";
 import "../../../css/home.css"
 
 import { useDispatch } from "react-redux";
-import { Dispatch } from "@reduxjs/toolkit";
+import { AppDispatch } from "../../store";
 import { setNewDishes, setPopularDishes, setTopUsers } from "./slice";
-import { Product } from "../../../lib/types/product";
 import ProductService from "../../services/ProductService";
 import { ProductCollection } from "../../../lib/enums/product.enum";
 import MemberService from "../../services/MemberService";
-import { Member } from "../../../lib/types/member";
-
-/**REDUX SLICE & SELECTOR */
-const actionDispatch = (dispatch: Dispatch) => ({
-    setPopularDishes: (data: Product[]) => dispatch(setPopularDishes(data)),
-    setNewDishes: (data: Product[]) => dispatch(setNewDishes(data)),
-    setTopUsers: (data: Member[]) => dispatch(setTopUsers(data)),
-
-});
 
 export default function HomePage() {
-    const { setPopularDishes, setNewDishes, setTopUsers } = actionDispatch(useDispatch());
+    const dispatch = useDispatch<AppDispatch>();
 
     //Selector : Store => Data
     console.log(import.meta.env.VITE_API_URL);
@@ -42,8 +31,7 @@ export default function HomePage() {
                 order: "productViews",
                 productCollection: ProductCollection.DISH,
             }).then(data => {
-                console.log("data passed here:", data);
-                setPopularDishes(data);
+                dispatch(setPopularDishes(data));
             }
 
             ).catch((err) => console.log(err));
@@ -56,7 +44,7 @@ export default function HomePage() {
                 order: "createdAt",
                 // productCollection: ProductCollection.DISH,
             }).then(data => {
-                setNewDishes(data);
+                dispatch(setNewDishes(data));
             }
 
             ).catch((err) => console.log(err));
@@ -64,10 +52,10 @@ export default function HomePage() {
         const member = new MemberService();
         member
             .getTopUsers()
-            .then(data => setTopUsers(data))
+            .then(data => dispatch(setTopUsers(data)))
             .catch((err) => console.log(err));
 
-    }, []);
+    }, [dispatch]);
 
 
     return <div className={"homepage"}>

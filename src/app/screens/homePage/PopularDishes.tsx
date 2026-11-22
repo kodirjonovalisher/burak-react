@@ -38,8 +38,6 @@ export default function PopularDishes() {
                             {popularDishes.length > 0 ? (
                                 popularDishes.map((product: Product) => {
                                     const imagePath = `${serverApi}/${product.productImages[0]}`;
-                                    const sizeVolume = product.productSize || "Medium";
-
                                     return (
                                         <Card className="card" key={product._id}>
                                             <CardCover>

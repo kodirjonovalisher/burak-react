@@ -3,27 +3,21 @@ import { Container, Stack, Box } from "@mui/material";
 import { Swiper, SwiperSlide } from "swiper/react";
 import Divider from "../../components/divider";
 import Button from "@mui/material/Button";
-import { useParams } from "react-router-dom"; // @ts-ignore
+import { useParams } from "react-router-dom";
 import { FreeMode, Navigation, Thumbs } from "swiper";
 import "swiper/swiper-bundle.min.css";
 
 import { useDispatch, useSelector } from "react-redux";
-import { Dispatch } from "@reduxjs/toolkit";
+import { AppDispatch } from "../../store";
 import { setRestaurant, setChosenProduct } from "./slice";
 import { createSelector } from "reselect";
 import { retrieveChosenProduct, retrieveRestaurant } from "./selector";
-import { Product } from "../../../lib/types/product";
-import { Member } from "../../../lib/types/member";
 import ProductService from "../../services/ProductService";
 import MemberService from "../../services/MemberService";
 import { serverApi } from "../../../lib/config";
 import { CartItem } from "../../../lib/types/search";
 
 /** REDUX SLICE & SELECTOR */
-const actionDispatch = (dispatch: Dispatch) => ({
-    setRestaurant: (data: Member) => dispatch(setRestaurant(data)),
-    setChosenProduct: (data: Product) => dispatch(setChosenProduct(data)),
-});
 const chosenProductRetriever = createSelector(
     retrieveChosenProduct,
     (chosenProduct) => ({
@@ -43,47 +37,46 @@ interface ChosenProductProps {
 export default function ChosenProduct(props: ChosenProductProps) {
     const { onAdd } = props;
     const { productId } = useParams<{ productId: string }>();
-    const { setRestaurant, setChosenProduct } = actionDispatch(useDispatch());
+    const dispatch = useDispatch<AppDispatch>();
     const { chosenProduct } = useSelector(chosenProductRetriever);
     const { restaurant } = useSelector(restaurantRetriever);
-    const [loading, setLoading] = useState(true);
-    const [loadError, setLoadError] = useState(false);
+    const [loadedProductId, setLoadedProductId] = useState<string | null>(null);
+    const [failedProductId, setFailedProductId] = useState<string | null>(null);
 
     useEffect(() => {
         let active = true;
-        setLoading(true);
-        setLoadError(false);
         const product = new ProductService();
         product
             .getProduct(productId)
             .then((data) => {
-                if (active) setChosenProduct(data);
+                if (active) {
+                    dispatch(setChosenProduct(data));
+                    setLoadedProductId(productId);
+                    setFailedProductId(null);
+                }
             })
             .catch((err) => {
                 console.error("Could not load product details:", err);
-                if (active) setLoadError(true);
-            })
-            .finally(() => {
-                if (active) setLoading(false);
+                if (active) setFailedProductId(productId);
             });
 
         const member = new MemberService();
         member
             .getRestaurant()
             .then((data) => {
-                if (active) setRestaurant(data);
+                if (active) dispatch(setRestaurant(data));
             })
             .catch((err) => console.error("Could not load restaurant details:", err));
 
         return () => {
             active = false;
         };
-    }, [productId]);
+    }, [productId, dispatch]);
 
-    if (loading) {
-        return <div className="chosen-product"><Box className="title">Loading product…</Box></div>;
+    if (loadedProductId !== productId && failedProductId !== productId) {
+        return null;
     }
-    if (loadError || !chosenProduct || chosenProduct._id !== productId) {
+    if (failedProductId === productId || !chosenProduct || chosenProduct._id !== productId) {
         return (
             <div className="chosen-product">
                 <Box className="title">Product details are unavailable. Check that the API server is running.</Box>
@@ -96,10 +89,10 @@ export default function ChosenProduct(props: ChosenProductProps) {
             <Container className={"product-container"}>
                 <Stack className={"chosen-product-slider"}>
                     <Swiper
+                        modules={[FreeMode, Navigation, Thumbs]}
                         loop={true}
                         spaceBetween={10}
                         navigation={true}
-                        modules={[FreeMode, Navigation, Thumbs]}
                         className="swiper-area"
                     >
                         {chosenProduct?.productImages.map(
