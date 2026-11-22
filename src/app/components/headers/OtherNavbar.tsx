@@ -1,55 +1,80 @@
 import { Box, Button, Container, Stack } from "@mui/material";
 import { NavLink } from "react-router-dom";
 import Basket from "./Basket";
+import { CartItem } from "../../../lib/types/search";
 
-export default function OtherNavbar() {
+interface OtherNavbarProps {
+    cartItems: CartItem[];
+    onRemove: (id: string) => void;
+    onChangeQuantity: (id: string, change: number) => void;
+}
+
+
+export default function OtherNavbar(props: OtherNavbarProps) {
+    const { cartItems, onRemove, onChangeQuantity } = props;
     const authMember = null;
-    return <div className="other-navbar">
-        <Container className="navbar-container">
-            <Stack className="menu" >
-                <Box>
-                    <NavLink to="/">
-                        <img className="brand-logo" src="/icons/burak.svg" />
-                    </NavLink>
-                </Box>
-                <Stack className="links" >
-                    <Box className={"hover-line"} >
-                        <NavLink to="/">Home</NavLink>
+    return (
+        <div className="other-navbar">
+            <Container className="navbar-container">
+                <Stack className="menu">
+                    <Box>
+                        <NavLink to="/">
+                            <img className="brand-logo"
+                                src="/icons/burak.svg"
+                            />
+                        </NavLink>
                     </Box>
-                    <Box className={"hover-line"} >
-                        <NavLink to="/products" activeClassName={"underline"}>Products</NavLink>
-                    </Box>
-                    {authMember ? (
+                    <Stack className="links"
+                    >
                         <Box className={"hover-line"}>
-                            <NavLink to="/orders" activeClassName={"underline"}>Orders</NavLink>
+                            <NavLink to="/" activeClassName={"underline"}>
+                                Home
+                            </NavLink>
                         </Box>
-                    ) : null}
-                    {authMember ? (
                         <Box className={"hover-line"}>
-                            <NavLink to="/member-page" activeClassName={"underline"}>MyPage</NavLink>
+                            <NavLink to="/products" activeClassName={"underline"}>
+                                Products
+                            </NavLink>
                         </Box>
-                    ) : null}
-
-                    <Box className={"hover-line"}>
-                        <NavLink to="/help" activeClassName={"underline"}>Help</NavLink>
-                    </Box >
-                    {/* BASKET */}
-                    <Basket />
-
-                    {!authMember ? (
-                        <Box >
-                            <Button variant="contained"
-                                className="login-button">Login</Button>
+                        {authMember ? (
+                            <Box className={"hover-line"}>
+                                <NavLink to="/orders" activeClassName={"underline"}>
+                                    Order
+                                </NavLink>
+                            </Box>
+                        ) : null}
+                        {authMember ? (
+                            <Box className={"hover-line"}>
+                                <NavLink to="/member-page" activeClassName={"underline"}>
+                                    My Page
+                                </NavLink>
+                            </Box>
+                        ) : null}
+                        <Box className={"hover-line"}>
+                            <NavLink to="/help" activeClassName={"underline"}>
+                                Help
+                            </NavLink>
                         </Box>
-                    ) : (
-                        <img className="user-avatar"
-                            src={"/icons/default-user.svg"}
-                            aria-haspopup={"true"}
-                        />
-                    )}
+                        <Basket cartItems={cartItems} onRemove={onRemove} onChangeQuantity={onChangeQuantity} />
+
+                        {!authMember ? (
+                            <Box>
+                                <Button
+                                    variant="contained" className="login-button"
+                                >
+                                    Login
+                                </Button>
+                            </Box>
+                        ) : (
+                            <img
+                                className="user-avatar"
+                                src={"/icons/default-user.svg"}
+                                aria-haspopup={"true"} />
+                        )}
+                    </Stack>
                 </Stack>
-            </Stack>
 
-        </Container>
-    </div>;
+            </Container>
+        </div>
+    );
 }
