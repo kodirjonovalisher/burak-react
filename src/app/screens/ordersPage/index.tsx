@@ -14,6 +14,7 @@ import { Dispatch } from "@reduxjs/toolkit";
 import { setFinishedOrders, setPausedOrders, setProcessOrders } from "./slice";
 import { OrderStatus } from "../../../lib/enums/order.enum";
 import OrderService from "../../services/OrderService";
+import { useGlobals } from "../../hooks/useGlobals";
 
 const LocationOnIcon = (LocationOnIconModule as unknown as { default: typeof LocationOnIconModule }).default;
 
@@ -25,6 +26,7 @@ const actionDispatch = (dispatch: Dispatch) => ({
 });
 
 export default function OrdersPage() {
+    const { orderBuilder } = useGlobals();
     const { setPausedOrders, setProcessOrders, setFinishedOrders } = actionDispatch(useDispatch());
     const [value, setValue] = useState("1");
 
@@ -53,7 +55,7 @@ export default function OrdersPage() {
             .getMyOrders({ ...orderInquiry, orderStatus: OrderStatus.FINISH })
             .then((data) => setFinishedOrders(data))
             .catch((err) => console.log(err));
-    }, [orderInquiry]);
+    }, [orderInquiry, orderBuilder]);
 
     /**HANDLERS */
 
@@ -82,8 +84,8 @@ export default function OrdersPage() {
                             </Box>
                         </Box>
                         <Stack className={"order-main-content"}>
-                            <PausedOrders />
-                            <ProcessOrders />
+                            <PausedOrders setValue={setValue} />
+                            <ProcessOrders setValue={setValue} />
                             <FinishedOrders />
                         </Stack>
                     </TabContext>

@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React from "react";
 import { Box, Stack } from "@mui/material";
 import Button from "@mui/material/Button";
 import TabPanel from "@mui/lab/TabPanel";
@@ -6,10 +6,13 @@ import TabPanel from "@mui/lab/TabPanel";
 import { useSelector } from "react-redux";
 import { createSelector } from "reselect";
 import { retrievePausedOrders } from "./selector";
-import { serverApi } from "../../../lib/config";
-import { Order, OrderItem } from "../../../lib/types/order";
-import { Product } from "../../../lib/types/product";
-import ProductService from "../../services/ProductService";
+import { Messages, serverApi } from "../../../lib/config";
+import { Order, OrderItem, OrderUpdateInput } from "../../../lib/types/order";
+import { OrderStatus } from "../../../lib/enums/order.enum";
+import OrderService from "../../services/OrderService";
+import { sweetErrorHandling } from "../../../lib/sweetAlert";
+import { useGlobals } from "../../hooks/useGlobals";
+import { T } from "../../../lib/common";
 
 /** REDUX SLICE & SELECTOR */
 const pausedOrdersRetriever = createSelector(
@@ -17,41 +20,63 @@ const pausedOrdersRetriever = createSelector(
     (pausedOrders) => ({ pausedOrders })
 );
 
-export default function PausedOrders() {
+interface PausedOrdersProps {
+    setValue: (input: string) => void;
+};
+
+export default function PausedOrders(props: PausedOrdersProps) {
+    const { setValue } = props;
+    const { authMember, setOrderBuilder } = useGlobals();
     const { pausedOrders } = useSelector(pausedOrdersRetriever);
-    const [products, setProducts] = useState<Product[]>([]);
     const orders = Array.isArray(pausedOrders) ? pausedOrders : [];
 
-    useEffect(() => {
-        const productIds = Array.from(new Set(
-            orders.flatMap((order: Order) =>
-                (order.orderItems ?? [])
-                    .filter((item: OrderItem) =>
-                        !order.productData?.some(
-                            (product: Product) => String(product._id) === String(item.productId)
-                        )
-                    )
-                    .map((item: OrderItem) => String(item.productId))
-            )
-        ));
+    /**HANDLERS */
+    const deleteOrderHandler = async (e: T) => {
+        try {
+            if (!authMember) throw new Error(Messages.error2);
+            const orderId = e.currentTarget.value;
+            const input: OrderUpdateInput = {
+                orderId: orderId,
+                orderStatus: OrderStatus.DELETE,
+            };
 
-        if (productIds.length === 0) {
-            setProducts([]);
-            return;
+            const confirmation = window.confirm("Do you want to delete the order?");
+            if (confirmation) {
+                const order = new OrderService();
+                await order.updateOrder(input);
+                setOrderBuilder(new Date());
+            }
+        } catch (err) {
+            console.log(err);
+            sweetErrorHandling(err).then();
         }
+    };
 
-        const productService = new ProductService();
-        let active = true;
+    const processOrderHandler = async (e: T) => {
+        try {
+            if (!authMember) throw new Error(Messages.error2);
+            // PAYMENT PROCESS
 
-        Promise.all(productIds.map((id) => productService.getProduct(id).catch(() => null)))
-            .then((results) => {
-                if (active) setProducts(results.filter((product): product is Product => product !== null));
-            });
+            const orderId = e.currentTarget.value;
+            const input: OrderUpdateInput = {
+                orderId: orderId,
+                orderStatus: OrderStatus.PROCESS,
+            };
 
-        return () => {
-            active = false;
-        };
-    }, [orders]);
+            const confirmation = window.confirm(
+                "Do you want to proceed with payment?"
+            );
+            if (confirmation) {
+                const order = new OrderService();
+                await order.updateOrder(input);
+                setValue("2");
+                setOrderBuilder(new Date());
+            }
+        } catch (err) {
+            console.log(err);
+            sweetErrorHandling(err).then();
+        }
+    };
 
     return (
         <TabPanel value={"1"}>
@@ -60,12 +85,8 @@ export default function PausedOrders() {
                     return (
                         <Box key={order._id} className={"order-main-box"}>
                             <Box className={"order-box-scroll"}>
-                                {order?.orderItems?.map((item: OrderItem, index: number) => {
-                                    const product = order.productData?.find(
-                                        (ele: Product) => String(ele._id) === String(item.productId)
-                                    ) ?? order.productData?.[index] ?? products.find(
-                                        (ele: Product) => String(ele._id) === String(item.productId)
-                                    );
+                                {order?.orderItems?.map((item: OrderItem) => {
+                                    const product = item.productData?.[0];
 
                                     const productImage = product?.productImages?.[0];
                                     if (!product || !productImage) return null;
@@ -105,13 +126,19 @@ export default function PausedOrders() {
                                     <p>${order.orderTotal}</p>
                                 </Box>
                                 <Button
+                                    value={order._id}
                                     variant="contained"
                                     color="secondary"
                                     className={"cancel-button"}
+                                    onClick={deleteOrderHandler}
                                 >
                                     Cancel
                                 </Button>
-                                <Button variant="contained" className={"pay-button"}>
+                                <Button
+                                    value={order._id}
+                                    variant="contained"
+                                    className={"pay-button"}
+                                    onClick={processOrderHandler}>
                                     Payment
                                 </Button>
                             </Box>

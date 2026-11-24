@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React from "react";
 import { Box, Stack } from "@mui/material";
 import Button from "@mui/material/Button";
 import TabPanel from "@mui/lab/TabPanel";
@@ -6,10 +6,13 @@ import moment from "moment";
 import { useSelector } from "react-redux";
 import { createSelector } from "reselect";
 import { retrieveProcessOrders } from "./selector";
-import { Order, OrderItem } from "../../../lib/types/order";
-import { serverApi } from "../../../lib/config";
-import { Product } from "../../../lib/types/product";
-import ProductService from "../../services/ProductService";
+import { Order, OrderItem, OrderUpdateInput } from "../../../lib/types/order";
+import { Messages, serverApi } from "../../../lib/config";
+import { useGlobals } from "../../hooks/useGlobals";
+import { T } from "../../../lib/common";
+import { OrderStatus } from "../../../lib/enums/order.enum";
+import OrderService from "../../services/OrderService";
+import { sweetErrorHandling } from "../../../lib/sweetAlert";
 
 
 /** REDUX SLICE & SELECTOR */
@@ -18,41 +21,41 @@ const processOrdersRetriever = createSelector(
     (processOrders) => ({ processOrders })
 );
 
-export default function ProcessOrders() {
+interface ProcessOrdersProps {
+    setValue: (input: string) => void;
+};
+
+
+export default function ProcessOrders(props: ProcessOrdersProps) {
+    const { setValue } = props;
+    const { authMember, setOrderBuilder } = useGlobals();
     const { processOrders } = useSelector(processOrdersRetriever);
-    const [products, setProducts] = useState<Product[]>([]);
     const orders = Array.isArray(processOrders) ? processOrders : [];
 
-    useEffect(() => {
-        const productIds = Array.from(new Set(
-            orders.flatMap((order: Order) =>
-                (order.orderItems ?? [])
-                    .filter((item: OrderItem) =>
-                        !order.productData?.some(
-                            (product: Product) => String(product._id) === String(item.productId)
-                        )
-                    )
-                    .map((item: OrderItem) => String(item.productId))
-            )
-        ));
+    /**HANDLERS */
+    const finishOrderHandler = async (e: T) => {
+        try {
+            if (!authMember) throw new Error(Messages.error2);
 
-        if (productIds.length === 0) {
-            setProducts([]);
-            return;
+            const orderId = e.currentTarget.value;
+            const input: OrderUpdateInput = {
+                orderId: orderId,
+                orderStatus: OrderStatus.FINISH,
+            };
+
+            const confirmation = window.confirm("Have you received your order?");
+            if (confirmation) {
+                const order = new OrderService();
+                await order.updateOrder(input);
+                setValue("3");
+                setOrderBuilder(new Date());
+            }
+        } catch (err) {
+            console.log(err);
+            sweetErrorHandling(err).then();
         }
+    };
 
-        const productService = new ProductService();
-        let active = true;
-
-        Promise.all(productIds.map((id) => productService.getProduct(id).catch(() => null)))
-            .then((results) => {
-                if (active) setProducts(results.filter((product): product is Product => product !== null));
-            });
-
-        return () => {
-            active = false;
-        };
-    }, [orders]);
 
     return (
         <TabPanel value={"2"}>
@@ -61,12 +64,8 @@ export default function ProcessOrders() {
                     return (
                         <Box key={order._id} className={"order-main-box"}>
                             <Box className={"order-box-scroll"}>
-                                {order?.orderItems?.map((item: OrderItem, index: number) => {
-                                    const product = order.productData?.find(
-                                        (ele: Product) => String(ele._id) === String(item.productId)
-                                    ) ?? order.productData?.[index] ?? products.find(
-                                        (ele: Product) => String(ele._id) === String(item.productId)
-                                    );
+                                {order?.orderItems?.map((item: OrderItem) => {
+                                    const product = item.productData?.[0];
                                     const productImage = product?.productImages?.[0];
                                     if (!product || !productImage) return null;
 
@@ -108,7 +107,11 @@ export default function ProcessOrders() {
                                 <p className={"data-compl"}>
                                     {moment(order.createdAt).format("YY-MM-DD HH:mm")}
                                 </p>
-                                <Button variant="contained" className={"verify-button"}>
+                                <Button
+                                    value={order._id}
+                                    variant="contained"
+                                    className={"verify-button"}
+                                    onClick={finishOrderHandler}>
                                     Verify to Fulfil
                                 </Button>
                             </Box>

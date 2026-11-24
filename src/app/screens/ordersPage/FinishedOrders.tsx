@@ -4,7 +4,6 @@ import TabPanel from "@mui/lab/TabPanel";
 import { retrieveFinishedOrders } from "./selector";
 import { useSelector } from "react-redux";
 import { createSelector } from "reselect";
-import { Product } from "../../../lib/types/product";
 import { Order, OrderItem } from "../../../lib/types/order";
 import { serverApi } from "../../../lib/config";
 
@@ -26,12 +25,11 @@ export default function FinishedOrders() {
                         <Box key={order._id} className={"order-main-box"}>
                             <Box className={"order-box-scroll"}>
                                 {order?.orderItems?.map((item: OrderItem) => {
-                                    const product = order.productData.find(
-                                        (ele: Product) => ele._id === item.productId
-                                    );
-                                    if (!product) return null;
+                                    const product = item.productData?.[0];
+                                    const productImage = product?.productImages?.[0];
+                                    if (!product || !productImage) return null;
 
-                                    const imagePath = `${serverApi}/${product.productImages[0]}`;
+                                    const imagePath = `${serverApi}/${productImage}`;
                                     return (
                                         <Box key={item._id} className={"orders-name-price"}>
                                             <img
